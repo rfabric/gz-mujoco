@@ -19,6 +19,21 @@ import sdformat14 as sdf
 import sdformat_mjcf.utils.sdf_utils as su
 
 
+def _linear_coefficient(value):
+    """
+    The linear coefficient of a MJCF joint stiffness or damping. MuJoCo 3.3
+    made both polynomials (up to three coefficients); SDFormat has the linear
+    term only, so the higher-order terms are dropped.
+    :param value: A float or the coefficient array dm_control parses
+    :return: The linear coefficient
+    :rtype: float
+    """
+    try:
+        return float(value[0])
+    except TypeError:
+        return float(value)
+
+
 def add_fixed_joint(parent_name, child_name):
     """
     Return an SDFormat fixed joint
@@ -61,7 +76,7 @@ def mjcf_joint_to_sdf(joint, parent_name, child_name, default_classes=None):
     joint_sdf.set_raw_pose(su.get_pose_from_mjcf(joint))
 
     if joint.stiffness is not None:
-        joint_axis_sdf.set_spring_stiffness(joint.stiffness)
+        joint_axis_sdf.set_spring_stiffness(_linear_coefficient(joint.stiffness))
     else:
         joint_axis_sdf.set_spring_stiffness(0)
 
@@ -94,7 +109,7 @@ def mjcf_joint_to_sdf(joint, parent_name, child_name, default_classes=None):
                 joint_axis_sdf.set_upper(0)
 
     if joint.damping is not None:
-        joint_axis_sdf.set_damping(joint.damping)
+        joint_axis_sdf.set_damping(_linear_coefficient(joint.damping))
     else:
         joint_axis_sdf.set_damping(0)
 
